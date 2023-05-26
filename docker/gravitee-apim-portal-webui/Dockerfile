@@ -2,7 +2,7 @@ FROM nginx:1.23-alpine
 LABEL maintainer="SKrivonos@bellintegrator.com"
 
 ARG GRAVITEEIO_VERSION=3.19.7
-ARG GRAVITEEIO_FIX_VERSION=-fix-vul-20230208
+ARG GRAVITEEIO_FIX_VERSION=-fix-vul
 ARG GRAVITEEIO_DOWNLOAD_URL=https://github.com/Bell-Integrator-Inc/Bell_API_management/releases/download
 ARG GRAVITEEIO_PACKAGE_NAME=graviteeio-full
 
