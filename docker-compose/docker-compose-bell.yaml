@@ -51,7 +51,7 @@ services:
       - storage
 
   gateway:
-    image: gravitee-apim-gateway:3.19.7
+    image: bell/gravitee-apim-gateway:3.19.7
     container_name: gravitee-apim-gateway
     restart: always
     ports:
