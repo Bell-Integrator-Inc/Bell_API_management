@@ -3,7 +3,7 @@ LABEL maintainer="SKrivonos@bellintegrator.com"
 
 ARG GRAVITEEIO_VERSION=3.19.7
 ARG GRAVITEEIO_FIX_VERSION=-fix-vul-20230208
-ARG GRAVITEEIO_DOWNLOAD_URL=https://github.com/Bell-Integrator-Inc/Bell_API_management/releases/download/
+ARG GRAVITEEIO_DOWNLOAD_URL=https://github.com/Bell-Integrator-Inc/Bell_API_management/releases/download
 ARG GRAVITEEIO_PACKAGE_NAME=graviteeio-full
 
 ENV GRAVITEEIO_HOME /opt/graviteeio-gateway
@@ -12,7 +12,7 @@ RUN apk update \
     && apk add --upgrade --no-cache curl freetype libcurl libxml2 pcre2 xz-libs busybox expat openssl \
     && apk add --upgrade --no-cache zip unzip netcat-openbsd \
     && wget ${GRAVITEEIO_DOWNLOAD_URL}/${GRAVITEEIO_VERSION}-fix-vul/${GRAVITEEIO_PACKAGE_NAME}-${GRAVITEEIO_VERSION}${GRAVITEEIO_FIX_VERSION}.zip --no-check-certificate -P /tmp \
-    && unzip /tmp/${GRAVITEEIO_PACKAGE_NAME}-${GRAVITEEIO_VERSION}.zip -d /tmp \
+    && unzip /tmp/${GRAVITEEIO_PACKAGE_NAME}-${GRAVITEEIO_VERSION}${GRAVITEEIO_FIX_VERSION}.zip -d /tmp/ \
     && apk del zip unzip netcat-openbsd \
     && mv /tmp/${GRAVITEEIO_PACKAGE_NAME}-${GRAVITEEIO_VERSION}/graviteeio-apim-gateway* ${GRAVITEEIO_HOME} \
     && cd ${GRAVITEEIO_HOME}/plugins \

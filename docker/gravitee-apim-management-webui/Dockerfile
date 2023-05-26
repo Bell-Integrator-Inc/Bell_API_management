@@ -3,7 +3,7 @@ LABEL maintainer="SKrivonos@bellintegrator.com"
 
 ARG GRAVITEEIO_VERSION=3.19.7
 ARG GRAVITEEIO_FIX_VERSION=-fix-vul-20230208
-ARG GRAVITEEIO_DOWNLOAD_URL=https://github.com/Bell-Integrator-Inc/Bell_API_management/releases/download/
+ARG GRAVITEEIO_DOWNLOAD_URL=https://github.com/Bell-Integrator-Inc/Bell_API_management/releases/download
 ARG GRAVITEEIO_PACKAGE_NAME=graviteeio-full
 
 ENV CONFD_VERSION="0.16.0"
@@ -14,7 +14,7 @@ RUN apk update \
   && apk add --upgrade --no-cache curl freetype libcurl libxml2 pcre2 xz-libs \
   && apk add --upgrade --no-cache zip unzip netcat-openbsd wget \
   && apk add --upgrade --no-cache libgcrypt \
-  && wget ${GRAVITEEIO_DOWNLOAD_URL}/${GRAVITEEIO_PACKAGE_NAME}-${GRAVITEEIO_VERSION}${GRAVITEEIO_FIX_VERSION}.zip --no-check-certificate -P /tmp \
+  && wget ${GRAVITEEIO_DOWNLOAD_URL}/${GRAVITEEIO_VERSION}-fix-vul/${GRAVITEEIO_PACKAGE_NAME}-${GRAVITEEIO_VERSION}${GRAVITEEIO_FIX_VERSION}.zip --no-check-certificate -P /tmp \
   && unzip /tmp/${GRAVITEEIO_PACKAGE_NAME}-${GRAVITEEIO_VERSION}${GRAVITEEIO_FIX_VERSION}.zip -d /tmp/ \
   && apk del zip unzip netcat-openbsd wget \
   && cp -fr /tmp/${GRAVITEEIO_PACKAGE_NAME}-${GRAVITEEIO_VERSION}/graviteeio-apim-console-ui-${GRAVITEEIO_VERSION}/* ${WWW_TARGET} \
