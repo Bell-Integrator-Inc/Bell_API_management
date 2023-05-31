@@ -1,6 +1,10 @@
-# Хранение БД PostgreSQL
+# Хранение БД PostgreSQL для Gravitee
 mkdir ~/gravitee/postgresql-apim
 mkdir ~/gravitee/postgresql-apim/data
+
+# Хранение БД PostgreSQL для Keycloak
+mkdir ~/gravitee/postgresql-keycloak
+mkdir ~/gravitee/postgresql-keycloak/data
 
 # Хранение БД Elasticsearch
 mkdir ~/gravitee/elasticsearch

@@ -29,6 +29,20 @@ services:
     networks:
       - storage
 
+  keycloak-postgresql:
+    image: bitnami/postgresql:11
+    container_name: keycloak-postgresql
+    environment:
+      # ALLOW_EMPTY_PASSWORD is recommended only for development.
+      - ALLOW_EMPTY_PASSWORD=yes
+      - POSTGRESQL_USERNAME=keycloak
+      - POSTGRESQL_PASSWORD=keycloak
+      - POSTGRESQL_DATABASE=keycloak_db
+    volumes:
+      - ~/gravitee/postgresql-keycloak:/bitnami/postgresql
+    networks:
+      - storage
+
   gravitee-elasticsearch:
     image: elasticsearch:7.7.0
     container_name: gravitee-elasticsearch
@@ -49,6 +63,35 @@ services:
       nofile: 65536
     networks:
       - storage
+
+  keycloak:
+    image: bitnami/keycloak:17
+    container_name: keycloak-ui
+    depends_on:
+      - keycloak-postgresql
+    ports:
+      - "80:8080"
+    environment:
+      # Admin credentials
+      - KEYCLOAK_CREATE_ADMIN_USER=true
+      - KEYCLOAK_ADMIN_USER=admin
+      - KEYCLOAK_ADMIN_PASSWORD=admin
+      - KEYCLOAK_MANAGEMENT_USER=manager
+      - KEYCLOAK_MANAGEMENT_PASSWORD=manager
+      # Connecting to a PostgreSQL database
+      - KEYCLOAK_DATABASE_HOST=keycloak-postgresql
+      - KEYCLOAK_DATABASE_PORT=5432
+      - KEYCLOAK_DATABASE_NAME=keycloak_db
+      - KEYCLOAK_DATABASE_USER=keycloak
+      - KEYCLOAK_DATABASE_PASSWORD=keycloak
+      - KEYCLOAK_DATABASE_SCHEMA=public
+      # Port and address binding
+      - KEYCLOAK_HTTP_PORT=8080
+      # Extra arguments to Keycloak startup
+      - KEYCLOAK_EXTRA_ARGS="-Dkeycloak.profile.feature.scripts=enabled"
+    networks:
+      - storage
+      - frontend
 
   gateway:
     image: bell/gravitee-apim-gateway:3.19.7
