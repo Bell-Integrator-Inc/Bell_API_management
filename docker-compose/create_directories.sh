@@ -10,6 +10,10 @@ mkdir ~/gravitee/postgresql-keycloak/data
 mkdir ~/gravitee/elasticsearch
 mkdir ~/gravitee/elasticsearch/data
 
+# Хранение БД Opensearch
+mkdir ~/gravitee/opensearch
+mkdir ~/gravitee/opensearch/data
+
 # Хранение БД Redis
 mkdir ~/gravitee/redis
 
