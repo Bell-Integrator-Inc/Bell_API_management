@@ -28,6 +28,8 @@ services:
       - ~/gravitee/postgresql-apim:/bitnami/postgresql
     networks:
       - storage
+    ports:
+      - 5432:5432
 
   keycloak-postgresql:
     image: bitnami/postgresql:11
@@ -42,6 +44,8 @@ services:
       - ~/gravitee/postgresql-keycloak:/bitnami/postgresql
     networks:
       - storage
+    ports:
+      - 5433:5432
 
 #  gravitee-elasticsearch:
 #    image: elasticsearch:7.7.0
