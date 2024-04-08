@@ -21,6 +21,8 @@ services:
     container_name: gravitee-postgresql
     environment:
       - ALLOW_EMPTY_PASSWORD=yes
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_USER=postgres
       - POSTGRESQL_USERNAME=gravitee
       - POSTGRESQL_PASSWORD=gravitee
       - POSTGRESQL_DATABASE=gravitee_db
@@ -118,7 +120,7 @@ services:
     depends_on:
       - keycloak-postgresql
     ports:
-      - "80:8080"
+      - "8080:8080"
     environment:
       # Admin credentials
       - KEYCLOAK_CREATE_ADMIN_USER=true
