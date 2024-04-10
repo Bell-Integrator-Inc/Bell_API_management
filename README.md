@@ -24,6 +24,12 @@ cd ./docker-compose
 
 3. Запускаем докер-контейнеры
 ```
+// Для linux
 cd ./docker-compose
 docker-compose up -d -f docker-compose-bell.yaml
+
+// Для windows
+cd ./docker-compose
+вносим правки в файл docker-compose-bell-win.yaml, меняем абсолютные пути к каталогам, все места где /Users/Roman - меняем на /Users/{Свой пользователь win}
+docker-compose -f docker-compose-bell-win.yaml up -d
 ```
