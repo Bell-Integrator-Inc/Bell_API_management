@@ -1,0 +1,241 @@
+version: '3.5'
+networks:
+  frontend:
+    name: frontend
+  storage:
+    name: storage
+services:
+
+  gravitee-redis:
+    image: bitnami/redis:6.2.12
+    container_name: gravitee-redis
+    environment:
+      - ALLOW_EMPTY_PASSWORD=yes
+    volumes:
+      - ~/gravitee/redis:/bitnami/redis/data
+    networks:
+      - storage
+      
+  gravitee-postgresql:
+    image: bitnami/postgresql:11
+    container_name: gravitee-postgresql
+    environment:
+      - ALLOW_EMPTY_PASSWORD=yes
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRESQL_USERNAME=gravitee
+      - POSTGRESQL_PASSWORD=gravitee
+      - POSTGRESQL_DATABASE=gravitee_db
+    volumes:
+      - ~/gravitee/postgresql-apim:/bitnami/postgresql
+    networks:
+      - storage
+    ports:
+      - 5432:5432
+
+  keycloak-postgresql:
+    image: bitnami/postgresql:11
+    container_name: keycloak-postgresql
+    environment:
+      # ALLOW_EMPTY_PASSWORD is recommended only for development.
+      - ALLOW_EMPTY_PASSWORD=yes
+      - POSTGRESQL_USERNAME=keycloak
+      - POSTGRESQL_PASSWORD=keycloak
+      - POSTGRESQL_DATABASE=keycloak_db
+    volumes:
+      - ~/gravitee/postgresql-keycloak:/bitnami/postgresql
+    networks:
+      - storage
+    ports:
+      - 5433:5432
+
+#  gravitee-elasticsearch:
+#    image: elasticsearch:7.7.0
+#    container_name: gravitee-elasticsearch
+#    restart: always
+#    volumes:
+#      - ~/gravitee/elasticsearch/data:/usr/share/elasticsearch/data
+#    environment:
+#      - http.host=0.0.0.0
+#      - transport.host=0.0.0.0
+#      - cluster.name=elasticsearch
+#      - bootstrap.memory_lock=true
+#      - discovery.type=single-node
+#      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+#    ulimits:
+#      memlock:
+#        soft: -1
+#        hard: -1
+#      nofile: 65536
+#    networks:
+#      - storage
+
+  gravitee-opensearch:
+    image: opensearchproject/opensearch:1.3.10
+#    image: opensearchproject/opensearch:2.8.0
+    container_name: gravitee-opensearch
+    restart: always
+    volumes:
+      - ~/gravitee/opensearch/data:/usr/share/opensearch/data
+    ports:
+      - 9200:9200
+      - 9300:9300
+      - 9600:9600 # required for Performance Analyzer
+    environment:
+      - http.host=0.0.0.0
+      - transport.host=0.0.0.0
+      - cluster.name=opensearch
+      - node.name=opensearch-node1
+      - plugins.security.disabled=true
+      - bootstrap.memory_lock=true # along with the memlock settings below, disables swapping
+      - discovery.type=single-node
+      - "OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m" # minimum and maximum Java heap size, recommend setting both to 50% of system RAM
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536 # maximum number of open files for the OpenSearch user, set to at least 65536 on modern systems
+        hard: 65536
+    networks:
+      - storage
+
+  opensearch-dashboards:
+    image: opensearchproject/opensearch-dashboards:1.3.10
+    container_name: opensearch-dashboards
+    ports:
+      - 5601:5601
+    expose:
+      - "5601"
+    environment:
+      - 'OPENSEARCH_HOSTS=["http://gravitee-opensearch:9200"]'
+      - "DISABLE_SECURITY_DASHBOARDS_PLUGIN=true"
+    networks:
+      - storage
+      - frontend
+
+  keycloak:
+    image: bitnami/keycloak:17
+    container_name: keycloak-ui
+    depends_on:
+      - keycloak-postgresql
+    ports:
+      - "8080:8080"
+    environment:
+      # Admin credentials
+      - KEYCLOAK_CREATE_ADMIN_USER=true
+      - KEYCLOAK_ADMIN_USER=admin
+      - KEYCLOAK_ADMIN_PASSWORD=admin
+      - KEYCLOAK_MANAGEMENT_USER=manager
+      - KEYCLOAK_MANAGEMENT_PASSWORD=manager
+      # Connecting to a PostgreSQL database
+      - KEYCLOAK_DATABASE_HOST=keycloak-postgresql
+      - KEYCLOAK_DATABASE_PORT=5432
+      - KEYCLOAK_DATABASE_NAME=keycloak_db
+      - KEYCLOAK_DATABASE_USER=keycloak
+      - KEYCLOAK_DATABASE_PASSWORD=keycloak
+      - KEYCLOAK_DATABASE_SCHEMA=public
+      # Port and address binding
+      - KEYCLOAK_HTTP_PORT=8080
+      # Extra arguments to Keycloak startup
+      - KEYCLOAK_EXTRA_ARGS="-Dkeycloak.profile.feature.scripts=enabled"
+    networks:
+      - storage
+      - frontend
+
+  gateway:
+    image: graviteeio/apim-gateway:3.19.7
+    container_name: gravitee-apim-gateway
+    restart: always
+    ports:
+      - "8082:8082"
+      - "18082:18082"
+    depends_on:
+      - gravitee-redis
+      - gravitee-postgresql
+      - gravitee-opensearch
+    volumes:
+      - ~/gravitee/apim-gateway/logs:/opt/graviteeio-gateway/logs
+      - ~/gravitee/apim-gateway/plugins:/opt/graviteeio-gateway/plugins-ext
+    environment:
+      - gravitee_management_type=jdbc
+      - gravitee_management_jdbc_url=jdbc:postgresql://gravitee-postgresql:5432/gravitee_db
+      - gravitee_management_jdbc_username=gravitee
+      - gravitee_management_jdbc_password=gravitee
+      - gravitee_ratelimit_type=redis
+      - gravitee_ratelimit_redis_host=gravitee-redis
+      - gravitee_ratelimit_redis_port=6379
+      - gravitee_reporters_elasticsearch_endpoints_0=http://gravitee-opensearch:9200
+      #- gravitee_reporters_elasticsearch_pipeline_plugins_ingest=geoip
+      - gravitee_tags=service-tag # включаем тег: service-tag
+      - gravitee_tenant=service-space # включаем тенант: service-space
+      - gravitee_services_core_http_enabled=true # включаем сервис выдачи данных по работе Gateway
+      - gravitee_services_core_http_port=18082 # порт сервиса
+      - gravitee_services_core_http_host=0.0.0.0 # адрес сервиса 
+      - gravitee_services_core_http_authentication_type=basic # аутентификация либо нет, либо basic - логин + пароль
+      - gravitee_services_core_http_authentication_type_users_admin=password # логин: admin, пароль: password
+    networks:
+      - storage
+      - frontend
+
+  management_api:
+    image: graviteeio/apim-management-api:3.19.7
+    container_name: gravitee-apim-management-api
+    restart: always
+    ports:
+      - "8083:8083"
+    links:
+      - gravitee-postgresql
+      - gravitee-opensearch
+    depends_on:
+      - gravitee-postgresql
+      - gravitee-opensearch
+    volumes:
+      - ~/gravitee/apim-management-api/logs:/opt/graviteeio-management-api/logs
+      - ~/gravitee/apim-management-api/plugins:/opt/graviteeio-management-api/plugins-ext
+    environment:
+      - gravitee_management_type=jdbc
+      - gravitee_management_jdbc_url=jdbc:postgresql://gravitee-postgresql:5432/gravitee_db
+      - gravitee_management_jdbc_username=gravitee
+      - gravitee_management_jdbc_password=gravitee
+      - gravitee_analytics_elasticsearch_endpoints_0=http://gravitee-opensearch:9200
+      - gravitee_email_enable=true # включаем возможность отправлять письма
+      - gravitee_email_host=smtp.domain.example # указываем сервер через который будем отправлять письма
+      - gravitee_email_port=25 # указываем порт для сервера
+      - gravitee_email_username=domain.example/gravitee # логин для сервера
+      - gravitee_email_password=password # пароль для логина от сервера
+      - gravitee_email_from=noreply@domain.example # указываем от чьего имени будут письма 
+      - gravitee_email_subject="[Gravitee.io] %s" # указываем тему письма
+    networks:
+      - storage
+      - frontend
+
+  management_ui:
+    image: graviteeio/apim-management-ui:3.19.7
+    container_name: gravitee-apim-management-ui
+    restart: always
+    ports:
+      - "8084:8080"
+    depends_on:
+      - management_api
+    environment:
+      - MGMT_API_URL=http://localhost:8083/management/organizations/DEFAULT/environments/DEFAULT/
+    volumes:
+      - ~/gravitee/apim-management-ui/logs:/var/log/nginx
+    networks:
+      - frontend
+
+  portal_ui:
+    image: graviteeio/apim-portal-ui:3.19.7
+    container_name: gravitee-apim-portal-ui
+    restart: always
+    ports:
+      - "8085:8080"
+    depends_on:
+      - management_api
+    environment:
+      - PORTAL_API_URL=http://localhost:8083/portal/environments/DEFAULT
+    volumes:
+      - ~/gravitee/apim-portal-ui/logs:/var/log/nginx
+    networks:
+      - frontend
